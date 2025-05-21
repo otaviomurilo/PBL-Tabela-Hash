@@ -1,0 +1,32 @@
+RELATÓRIO DE DESEMPENHO 
+
+1. CONFIGURAÇÃO DO TESTE
+    - Capacidade da tabela: 32
+    - Função hash 1: Polinomial (base p=31)
+    - Tratamento de colisões: Endereçamento aberto com sondagem linear
+
+2. RESULTADOS OBTIDOS
+    2.1. Estatísticas de Colisão
+        - Colisões totais: 17
+        - Taxa de colisão: 53%
+        - Fator de carga: 1.0
+
+    2.2. Tempos Médios
+        - Inserção: 22865.625 ns/operação
+        - Busca: 1265.000 ns/operação
+
+    2.3. Distribuição das Chaves
+        - Posições ocupadas: 32/32
+        - Número de clusters: 1
+        - Tamanho do maior cluster: 32
+
+3. ANÁLISE TÉCNICA
+    3.1. Função Hash Polinomial
+        - Fórmula: hash = Σ(char_i * p^i) mod capacidade
+        - Base p=31 escolhida por ser número primo
+
+
+    3.2. Comportamento Observado
+        - Alta taxa de colisão (53%)
+
+

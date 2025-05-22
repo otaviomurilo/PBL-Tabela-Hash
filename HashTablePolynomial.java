@@ -3,6 +3,8 @@ public class HashTablePolynomial extends HashTable {
     private long totalSearchTime;
     private int collisions;
     private int searchOperations;
+    private static final String DELETED = "<deleted>"; //flag de exclusão
+
 
     public HashTablePolynomial(int capacity) {
         this.capacity = capacity;
@@ -16,9 +18,11 @@ public class HashTablePolynomial extends HashTable {
         int hash = 0;   //valor hash inicial
         int p = 31; // Base polinomial (núm. primo)
         int power = 1; //potência inicial
+        int length = key.length(); 
+        int salt = 0x9E3779B9; //núm mágico
         
-        for (int i = 0; i < key.length(); i++) {                        
-            hash = (hash + (key.charAt(i) * power)) % capacity;  // valor hash += (caractere * potencia atual) % capacidade (garante que fique dentro da capacidade da tabela)
+        for (int i = 0; i < length; i++) {                        
+            hash = (hash + salt + (key.charAt(i) * power)) % capacity;  // valor hash += salt + (caractere * potencia atual) % capacidade (garante que fique dentro da capacidade da tabela)
             power = (power * p) % capacity;  //atualiza a potencia e aplica o modulo da capacidade para evitar overflow
         }
         return Math.abs(hash); //evita indice negativo
@@ -26,69 +30,104 @@ public class HashTablePolynomial extends HashTable {
 
     @Override
     boolean insert(String name) {
-        long startTime = System.nanoTime(); //inicia a contagem do tempo de execução
-        
-        if (size >= capacity) { //verifica se a tabela está cheia
-            totalInsertTime += System.nanoTime() - startTime;
-            return false; //falha
+        if (isKeyInvalid(name)) {
+            return false;
         }
     
-        int index = hash(name); //calcula a posição inicial
-        int initIndex = index; //guarda a posição inicial --> capaz de detectar um loop completo
-        int attempt = 0;
-    
-        while (table[index] != null) { //tratamento com endereçamento aberto
-            if (table[index].equals(name)) { 
-                totalInsertTime += System.nanoTime() - startTime;
-                return false; //chave duplicada
-            }
-    
-            if (attempt == 0) collisions++;  // Contabiliza colisão apenas na primeira sondagem
-    
-            attempt++; //incrementa tentativa e calcula uma nova posição (sondagem linear)
-            index = (index + 1) % capacity;
-    
-            if (index == initIndex) { // volta completa na tabela
-                totalInsertTime += System.nanoTime() - startTime;
-                return false; //tabela cheia
-            }
-        }
-    
-        table[index] = name; //elemento inserido na posição encontrada
-        size++;
-        totalInsertTime += System.nanoTime() - startTime;
-        return true;
-    }
-
-    @Override
-    boolean search(String name) {
         long startTime = System.nanoTime();
-        boolean found = false;
-        
+    
+        if (size >= capacity) {
+            System.err.println("Erro: A tabela está cheia.");
+            totalInsertTime += System.nanoTime() - startTime;
+            return false;
+        }
+    
         int index = hash(name);
         int initIndex = index;
         int attempt = 0;
     
-        while (table[index] != null) {
+        while (table[index] != null && !table[index].equals(DELETED)) {
             if (table[index].equals(name)) {
-                found = true; //encontrou a chave
-                break;
+                System.err.println("Erro: Chave duplicada. O elemento já existe na tabela.");
+                totalInsertTime += System.nanoTime() - startTime;
+                return false;
             }
-    
+            if (attempt == 0) collisions++;
             attempt++;
             index = (index + 1) % capacity;
     
-            if (index == initIndex) break; //volta completa na tabela --> elemento não encontrado
+            if (index == initIndex) {
+                System.err.println("Erro: Não foi possível inserir. Loop completo detectado.");
+                totalInsertTime += System.nanoTime() - startTime;
+                return false;
+            }
+        }
+    
+        table[index] = name;
+        size++;
+        totalInsertTime += System.nanoTime() - startTime;
+        return true;
+    }
+    
+
+    @Override
+    boolean search(String name) {
+        if (isKeyInvalid(name)) {
+            return false;
+        }
+    
+        long startTime = System.nanoTime();
+        boolean found = false;
+    
+        int index = hash(name);
+        int initIndex = index;
+    
+        while (table[index] != null) {
+            if (!table[index].equals(DELETED) && table[index].equals(name)) { 
+                found = true;
+                break;
+            }
+            index = (index + 1) % capacity;
+    
+            if (index == initIndex) break;
         }
     
         totalSearchTime += System.nanoTime() - startTime;
         searchOperations++;
         return found;
     }
+    
 
     @Override
-    boolean remove(String name) { //a fazer
-        return false; 
+    boolean remove(String name) {
+        if (isKeyInvalid(name)) {
+            return false;
+        }
+    
+        int index = hash(name);
+        int initIndex = index;
+    
+        while (table[index] != null) {
+            if (table[index].equals(name)) {
+                table[index] = DELETED; // Marca o índice como removido
+                size--;
+                return true;
+            }
+            index = (index + 1) % capacity;
+    
+            if (index == initIndex) break;
+        }
+    
+        System.err.println("Erro: Elemento não encontrado para remoção.");
+        return false;
+    }
+
+    private boolean isKeyInvalid(String key) {
+        if (key == null || key.isEmpty()) {
+            System.err.println("Erro: Chave inválida (nula ou vazia) fornecida.");
+            return true;
+        }
+        return false;
     }
 
     //métodos para análise do relatório

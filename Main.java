@@ -9,6 +9,7 @@ public class Main {
             Collections.shuffle(names); // Embaralhar a lista
 
             HashTablePolynomial table = new HashTablePolynomial(32);
+            HashTableMulti multiTable = new HashTableMulti(32);
 
 
             System.out.println("=== Inserindo Nomes ===");
@@ -19,7 +20,16 @@ public class Main {
                 System.out.printf("Inserindo %s: %s\n", name, inserted ? "Sucesso" : "Falha");
             }
 
+            System.out.println("=== Inserindo Nomes ===");
+            int insertCountmulti = Math.min(32, names.size()); 
+            for (int i = 0; i < insertCountmulti; i++) {
+                String name = names.get(i);
+                boolean inserted = multiTable.insert(name);
+                System.out.printf("Inserindo %s: %s\n", name, inserted ? "Sucesso" : "Falha");
+            }
+
             table.printStatistics();
+            multiTable.printStatistics();
 
         } catch (Exception e) {
             System.err.println("Erro: " + e.getMessage());

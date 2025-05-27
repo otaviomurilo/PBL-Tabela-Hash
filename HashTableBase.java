@@ -7,46 +7,42 @@ public abstract class HashTableBase {
     protected int collisions;    
     protected int searchOperations; 
     protected static final String DELETED = "<deleted>"; // marcador para posições removidas
+    protected static final double MAX_LOAD_FACTOR = 0.7; // Fator de carga máximo --> 70%
 
-    // construtor: inicializa a tabela com uma capacidade fixa
-    public HashTableBase(int capacity) {
-        this.capacity = capacity;
+    public HashTableBase(int initialCapacity) {
+        this.capacity = initialCapacity;
         this.size = 0;
         this.table = new String[capacity];
         this.collisions = 0;
         this.searchOperations = 0;
     }
 
-
-    public abstract int hash(String key); //função desenvolvida nas classes filhas
-
-    public abstract String getHashType(); //
+    // Métodos abstratos (implementados nas classes filhas)
+    public abstract int hash(String key);
+    public abstract String getHashType();
 
     public boolean insert(String key) {
-        if (key == null || key.isEmpty()) return false; // chave inválida
+        if (key == null || key.isEmpty()) return false;
 
         long startTime = System.nanoTime();
 
-        if (size >= capacity) {
-            System.err.println("Erro: Tabela cheia.");
-            totalInsertTime += System.nanoTime() - startTime;
-            return false;
+        if ((double) size / capacity >= MAX_LOAD_FACTOR) {
+            resize();
         }
 
-        int index = hash(key); // calcula o índice inicial
+        int index = hash(key); // índice inicial
         int initialIndex = index;
         int attempt = 0;
 
-        // procura uma posição vazia ou marcada como removida
-        while (table[index] != null && !table[index].equals(DELETED)) {
+        while (table[index] != null && !table[index].equals(DELETED)) { // procura uma posição vazia ou marcada como removida
             if (table[index].equals(key)) {
                 System.err.println("Erro: Chave duplicada.");
                 totalInsertTime += System.nanoTime() - startTime;
                 return false;
             }
-            if (attempt == 0) collisions++; // conta colisões apenas no primeiro deslocamento
+            if (attempt == 0) collisions++; // Conta colisões apenas no primeiro deslocamento
             attempt++;
-            index = (index + 1) % capacity; 
+            index = (index + 1) % capacity; // Sondagem linear
             if (index == initialIndex) {
                 System.err.println("Erro: Loop completo na inserção.");
                 totalInsertTime += System.nanoTime() - startTime;
@@ -54,9 +50,46 @@ public abstract class HashTableBase {
             }
         }
 
-        table[index] = key; // insere a chave
+        table[index] = key; // Insere a chave
         size++;
         totalInsertTime += System.nanoTime() - startTime;
+        return true;
+    }
+
+    private void resize() {
+        int newCapacity = nextPrime(capacity * 2); // Dobra o tamanho (usa número primo)
+        String[] oldTable = table;
+        table = new String[newCapacity];
+        int oldCapacity = capacity;
+        capacity = newCapacity;
+        size = 0; // reinicia o contador 
+        collisions = 0; 
+
+        // Reinsere todos os elementos válidos da tabela antiga (mantém consistência no rehash)
+        for (int i = 0; i < oldCapacity; i++) {
+            String key = oldTable[i];
+            if (key != null && !key.equals(DELETED)) {
+                insert(key); 
+            }
+        }
+    }
+
+
+    private int nextPrime(int number) { //otimiza a distribuicao procurando o prox número primo
+        while (!isPrime(number)) {
+            number++;
+        }
+        return number;
+    }
+
+
+    private boolean isPrime(int number) { 
+        if (number <= 1) return false;
+        if (number == 2) return true;
+        if (number % 2 == 0) return false;
+        for (int i = 3; i * i <= number; i += 2) {
+            if (number % i == 0) return false;
+        }
         return true;
     }
 

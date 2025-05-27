@@ -1,5 +1,5 @@
-public class HashTableMulti extends HashTableBase {
-    public HashTableMulti(int capacity) {
+public class HashTableMultiplier extends HashTableBase {
+    public HashTableMultiplier(int capacity) {
         super(capacity);
     }
 

@@ -9,7 +9,7 @@ public class Main {
             Collections.shuffle(names); // Embaralhar a lista
 
             HashTablePolynomial table = new HashTablePolynomial(32);
-            HashTableMulti multiTable = new HashTableMulti(32);
+            HashTableMultiplier multiTable = new HashTableMultiplier(32);
 
 
             System.out.println("=== Inserindo Nomes ===");
